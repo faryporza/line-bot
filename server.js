@@ -53,40 +53,11 @@ app.use(express.json()); // 👈 ต้องมี
 app.use(express.static('public')); // เสิร์ฟไฟล์ static จากโฟลเดอร์ public
 
 // =========================
-// 4. Webhook (ปิด signature validation ชั่วคราว)
+// 4. Webhook (Simple version สำหรับ Verify)
 // =========================
-app.post("/webhook", express.json(), (req, res) => {
-  console.log("📩 Raw Webhook event:", JSON.stringify(req.body, null, 2));
-  
-  const events = req.body.events;
-  
-  if (!events || events.length === 0) {
-    console.log("📭 No events in webhook payload");
-    return res.sendStatus(200);
-  }
-
-  events.forEach(event => {
-    console.log("🔍 Event type:", event.type);
-    console.log("🔍 Source type:", event.source?.type);
-    
-    if (event.source && event.source.type === "group") {
-      const groupId = event.source.groupId;
-      console.log("📌 NEW Group ID found:", groupId);
-      console.log("🎯 Updating config.json with new Group ID...");
-      
-      // บันทึก Group ID ใหม่
-      const configData = { GROUP_ID: groupId };
-      fs.writeFileSync('./config.json', JSON.stringify(configData, null, 2));
-      console.log("💾 Group ID saved to config.json");
-      global.CURRENT_GROUP_ID = groupId;
-    }
-    
-    if (event.source && event.source.type === "user") {
-      console.log("👤 User ID:", event.source.userId);
-    }
-  });
-
-  res.sendStatus(200);
+app.post("/webhook", (req, res) => {
+  console.log("📩 LINE Webhook payload:", JSON.stringify(req.body, null, 2));
+  res.sendStatus(200); // ตอบกลับ 200 เสมอ
 });
 
 app.post("/test-webhook", (req, res) => {
@@ -140,6 +111,35 @@ try {
     GROUP_ID = configFile.GROUP_ID || GROUP_ID;
     console.log("📂 Loaded Group ID from config:", GROUP_ID);
   } else {
+    console.log("📂 No config.json found, using default GROUP_ID:", GROUP_ID);
+  }
+} catch (err) {
+  console.log("⚠️ Could not load config.json, using default GROUP_ID:", GROUP_ID);
+  console.log("Error:", err.message);
+}
+
+cron.schedule("0 9 * * *", () => {
+  console.log("⏰ ตรวจสอบการชำระเงินประจำวัน...");
+  const currentGroupId = global.CURRENT_GROUP_ID || GROUP_ID;
+  console.log("🎯 Using Group ID:", currentGroupId);
+  
+  if (currentGroupId !== "C644c0ea820afd742e0145fe80b2c7766") {
+    notifyUnpaid(currentGroupId);
+  } else {
+    console.log("⚠️ ยังไม่ได้ตั้งค่า GROUP_ID");
+  }
+});
+
+// =========================
+// 6. Run server
+// =========================
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
+  console.log("📋 Current GROUP_ID:", GROUP_ID);
+  console.log("📝 Web interface: http://localhost:" + PORT);
+  console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
+});
     console.log("📂 No config.json found, using default GROUP_ID:", GROUP_ID);
   }
 } catch (err) {
