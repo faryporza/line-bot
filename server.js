@@ -8,8 +8,8 @@ const fs = require('fs');
 // 1. ตั้งค่า LINE API
 // =========================
 const config = {
-  channelAccessToken: "XHmSW9xLrqdozbQ9wkjo/9xzIET7dmVhKt5GUBLUMWySy/0+FIZ57yBuKgPGKEDha6VvAK0aKDN76jw7tmZE2LtIs8EnL/DGaVmzqopXgjbcv7+OgpToxdRJocsemjDJqiEe5weZWzeCLIsQp16ovwdB04t89/1O/w1cDnyilFU=",
-  channelSecret: "e283f6e8b393cf6204b64148ce38ccd6"
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || "XHmSW9xLrqdozbQ9wkjo/9xzIET7dmVhKt5GUBLUMWySy/0+FIZ57yBuKgPGKEDha6VvAK0aKDN76jw7tmZE2LtIs8EnL/DGaVmzqopXgjbcv7+OgpToxdRJocsemjDJqiEe5weZWzeCLIsQp16ovwdB04t89/1O/w1cDnyilFU=",
+  channelSecret: process.env.CHANNEL_SECRET || "e283f6e8b393cf6204b64148ce38ccd6"
 };
 
 const client = new line.Client(config);
@@ -38,7 +38,7 @@ async function notifyUnpaid(groupId) {
 
     const message = {
       type: "text",
-      text: `📢 ประกาศจากหนูรั:\n${unpaidList}`
+      text: `📢 ประกาศจากหนูรัตน์ นะค่ะ อย่าลืมจ่ายเงินนะค่าา:\n${unpaidList}`
     };
 
     await client.pushMessage(groupId, message);
@@ -53,8 +53,27 @@ app.use(express.json()); // 👈 ต้องมี
 app.use(express.static('public')); // เสิร์ฟไฟล์ static จากโฟลเดอร์ public
 
 // =========================
-// 4. Webhook (Simple version สำหรับ Verify)
+// Root endpoint สำหรับเช็คสถานะ
 // =========================
+app.get("/", (req, res) => {
+  res.json({
+    status: "🤖 LINE Bot is running",
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      webhook: "/webhook (POST for LINE events, GET for test)",
+      sendTest: "/send-test",
+      sendMessage: "/send-message"
+    }
+  });
+});
+
+// =========================
+// 4. Webhook endpoints
+// =========================
+app.get("/webhook", (req, res) => {
+  res.send("✅ LINE Bot Webhook is running (use POST for events)");
+});
+
 app.post("/webhook", (req, res) => {
   console.log("📩 LINE Webhook payload:", JSON.stringify(req.body, null, 2));
   res.sendStatus(200); // ตอบกลับ 200 เสมอ
@@ -137,7 +156,12 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log("🚀 Server running on port " + PORT);
   console.log("📋 Current GROUP_ID:", GROUP_ID);
-  console.log("📝 Web interface: http://localhost:" + PORT);
-  console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
+  
+  if (process.env.NODE_ENV === 'production') {
+    console.log("🌐 Production mode - using environment variables");
+  } else {
+    console.log("💻 Development mode");
+    console.log("📝 Web interface: http://localhost:" + PORT);
+    console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
+  }
 });
-    
