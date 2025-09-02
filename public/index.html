@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE Bot Message Sender</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .quick-btn {
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .quick-btn:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 LINE Bot Message Sender</h1>
+        
+        <div class="quick-actions">
+            <div class="quick-btn" onclick="setQuickMessage('test')">🔥 ทดสอบข้อความ</div>
+            <div class="quick-btn" onclick="setQuickMessage('notify')">📢 เช็คการชำระ</div>
+        </div>
+
+        <form id="messageForm">
+            <div class="form-group">
+                <label for="messageType">ประเภทข้อความ:</label>
+                <select id="messageType">
+                    <option value="custom">ข้อความกำหนดเอง</option>
+                    <option value="test">ทดสอบระบบ</option>
+                    <option value="notify">เช็คการชำระเงิน</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="message">ข้อความ:</label>
+                <textarea id="message" placeholder="พิมพ์ข้อความที่ต้องการส่งไปยังกลุ่ม LINE..."></textarea>
+            </div>
+
+            <button type="submit" class="btn">📤 ส่งข้อความ</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const messageTypeSelect = document.getElementById('messageType');
+        const messageTextarea = document.getElementById('message');
+        const form = document.getElementById('messageForm');
+        const result = document.getElementById('result');
+
+        function setQuickMessage(type) {
+            messageTypeSelect.value = type;
+            updateMessage();
+        }
+
+        function updateMessage() {
+            const type = messageTypeSelect.value;
+            switch(type) {
+                case 'test':
+                    messageTextarea.value = '🔥 ทดสอบการส่งข้อความจาก Bot';
+                    break;
+                case 'notify':
+                    messageTextarea.value = ''; // จะใช้ฟังก์ชัน notifyUnpaid
+                    messageTextarea.placeholder = 'จะใช้ระบบเช็คฐานข้อมูลอัตโนมัติ';
+                    break;
+                default:
+                    messageTextarea.value = '';
+                    messageTextarea.placeholder = 'พิมพ์ข้อความที่ต้องการส่งไปยังกลุ่ม LINE...';
+            }
+        }
+
+        messageTypeSelect.addEventListener('change', updateMessage);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const type = messageTypeSelect.value;
+            const message = messageTextarea.value;
+
+            try {
+                let response;
+                
+                if (type === 'notify') {
+                    // ใช้ endpoint เช็คการชำระ
+                    response = await fetch('/send-test');
+                } else {
+                    // ส่งข้อความกำหนดเอง
+                    response = await fetch('/send-message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                }
+
+                const data = await response.text();
+                
+                result.className = 'result success';
+                result.textContent = data;
+                result.style.display = 'block';
+                
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+                result.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
