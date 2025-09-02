@@ -140,32 +140,4 @@ app.listen(PORT, () => {
   console.log("📝 Web interface: http://localhost:" + PORT);
   console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
 });
-    console.log("📂 No config.json found, using default GROUP_ID:", GROUP_ID);
-  }
-} catch (err) {
-  console.log("⚠️ Could not load config.json, using default GROUP_ID:", GROUP_ID);
-  console.log("Error:", err.message);
-}
-
-cron.schedule("0 9 * * *", () => {
-  console.log("⏰ ตรวจสอบการชำระเงินประจำวัน...");
-  const currentGroupId = global.CURRENT_GROUP_ID || GROUP_ID;
-  console.log("🎯 Using Group ID:", currentGroupId);
-  
-  if (currentGroupId !== "C644c0ea820afd742e0145fe80b2c7766") {
-    notifyUnpaid(currentGroupId);
-  } else {
-    console.log("⚠️ ยังไม่ได้ตั้งค่า GROUP_ID");
-  }
-});
-
-// =========================
-// 6. Run server
-// =========================
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log("🚀 Server running on port " + PORT);
-  console.log("📋 Current GROUP_ID:", GROUP_ID);
-  console.log("📝 Web interface: http://localhost:" + PORT);
-  console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
-});
+    
