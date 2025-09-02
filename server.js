@@ -162,9 +162,10 @@ cron.schedule("0 9 * * *", () => {
 // =========================
 // 6. Run server
 // =========================
-app.listen(3001, () => {
-  console.log("🚀 Server running on port 3001");
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
   console.log("📋 Current GROUP_ID:", GROUP_ID);
-  console.log("📝 Web interface: http://localhost:3001");
-  console.log("📝 Test API: http://localhost:3001/send-test");
+  console.log("📝 Web interface: http://localhost:" + PORT);
+  console.log("📝 Test API: http://localhost:" + PORT + "/send-test");
 });
