@@ -14,7 +14,6 @@ const config = {
 
 const client = new line.Client(config);
 const app = express();
-
 // =========================
 // 2. ฟังก์ชันเช็คคนที่ยังไม่จ่าย ผ่าน PHP API
 // =========================
@@ -36,17 +35,74 @@ async function notifyUnpaid(groupId) {
     // รวมชื่อทั้งหมด
     const unpaidList = data.data.map(u => `- ${u.name} (${u.profilename})`).join("\n");
 
+    // Flex message UI
     const message = {
-      type: "text",
-      text: `📢 ประกาศจากหนูรัตน์ นะค่ะ อย่าลืมจ่ายเงินนะค่าา:\n${unpaidList}`
+      type: "flex",
+      altText: "📢 ประกาศจากหนูรัตน์ นะค่ะ อย่าลืมจ่ายเงินนะค่าา",
+      contents: {
+        type: "bubble",
+        size: "mega",
+        body: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: "📢 ประกาศจากหนูรัตน์ นะค่ะ",
+              weight: "bold",
+              size: "lg",
+              color: "#D32F2F",
+              wrap: true
+            },
+            {
+              type: "text",
+              text: "อย่าลืมจ่ายเงินนะค่าา 💖",
+              size: "md",
+              margin: "sm",
+              color: "#333333",
+              wrap: true
+            },
+            {
+              type: "separator",
+              margin: "md"
+            },
+            {
+              type: "text",
+              text: `ผู้ค้างชำระ:\n${unpaidList}`,
+              size: "sm",
+              margin: "md",
+              color: "#555555",
+              wrap: true
+            }
+          ]
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          contents: [
+            {
+              type: "button",
+              style: "primary",
+              color: "#4CAF50",
+              action: {
+                type: "uri",
+                label: "💳 ไปจ่ายเงินเลย",
+                uri: "https://faryopor.online"
+              }
+            }
+          ]
+        }
+      }
     };
 
     await client.pushMessage(groupId, message);
-    console.log("📨 ส่งแจ้งเตือนเรียบร้อย");
+    console.log("📨 ส่ง Flex Message แจ้งเตือนเรียบร้อย");
   } catch (err) {
     console.error("❌ Error:", err.message);
   }
 }
+
 
 
 app.use(express.json()); // 👈 ต้องมี
