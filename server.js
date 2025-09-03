@@ -193,16 +193,10 @@ try {
   console.log("Error:", err.message);
 }
 
-cron.schedule("0 9 * * *", () => {
-  console.log("⏰ ตรวจสอบการชำระเงินประจำวัน...");
+cron.schedule("0 2 * * *", () => {
+  console.log("⏰ CRON TRIGGERED at", new Date().toISOString());
   const currentGroupId = global.CURRENT_GROUP_ID || GROUP_ID;
-  console.log("🎯 Using Group ID:", currentGroupId);
-  
-  if (currentGroupId !== "C644c0ea820afd742e0145fe80b2c7766") {
-    notifyUnpaid(currentGroupId);
-  } else {
-    console.log("⚠️ ยังไม่ได้ตั้งค่า GROUP_ID");
-  }
+  notifyUnpaid(currentGroupId);
 });
 
 // =========================
